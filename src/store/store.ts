@@ -34,7 +34,7 @@ export const useStore = create(
                 if (size == false) {
                   state.cartList[index].prices.push(cartItem.prices[0]);
                 }
-                state.cartItem[index].price.sort((a: any, b: any) => {
+                state.cartList[index].prices.sort((a: any, b: any) => {
                   if (a.size > b.size) {
                     return -1;
                   }
@@ -56,20 +56,64 @@ export const useStore = create(
         set(
           produce(state => {
             let totalPrice = 0;
+
             for (let index = 0; index < state.cartList.length; index++) {
               let tempPrice = 0;
+
               for (let i = 0; i < state.cartList[index].prices.length; i++) {
-                tempPrice =
-                  tempPrice +
-                  parseFloat(state.cartList[index].prices[i].price) *
-                    state.cartList[index].prices[i].quantity;
+                const price = parseFloat(state.cartList[index].prices[i].price);
+                const quantity = state.cartList[index].prices[i].quantity;
+
+                if (!isNaN(price) && !isNaN(quantity)) {
+                  tempPrice += price * quantity;
+                } else {
+                  console.warn(
+                    `Invalid price or quantity for item ${state.cartList[index].id}`,
+                  );
+                }
               }
-              state.cartList[index].ItemPrice = tempPrice.toFixed(2).toString();
-              totalPrice = totalPrice + tempPrice;
+
+              // console.log(
+              //   'tempPrice for item',
+              //   state.cartList[index].id,
+              //   tempPrice,
+              // );
+
+              if (!isNaN(tempPrice)) {
+                state.cartList[index].ItemPrice = tempPrice.toFixed(2);
+              } else {
+                console.warn(
+                  `Invalid tempPrice for item ${state.cartList[index].id}`,
+                );
+              }
+
+              // console.log(
+              //   'ItemPrice after update',
+              //   state.cartList[index].id,
+              //   state.cartList[index].ItemPrice,
+              // );
+
+              if (!isNaN(tempPrice)) {
+                totalPrice += tempPrice;
+              } else {
+                console.warn(
+                  `Invalid tempPrice for item ${state.cartList[index].id} in the total`,
+                );
+              }
             }
-            state.cartPrice = totalPrice.toFixed(2).toString();
+
+            // console.log('Total Price before update', totalPrice);
+
+            if (!isNaN(totalPrice)) {
+              state.cartPrice = totalPrice.toFixed(2);
+            } else {
+              console.warn('Invalid totalPrice');
+            }
+
+            // console.log('Total Price after update', state.cartPrice);
           }),
         ),
+
       addToFavoriteList: (type: string, id: string) =>
         set(
           produce(state => {
@@ -129,7 +173,81 @@ export const useStore = create(
             state.FavoriteList.splice(spliceIndex, 1);
           }),
         ),
+      incrementCartItemQuantity: (id: string, size: string) =>
+        set(
+          produce(state => {
+            for (let i = 0; i < state.cartList.length; i++) {
+              if (state.cartList[i].id == id) {
+                for (let j = 0; j < state.cartList[i].prices.length; j++) {
+                  if (state.cartList[i].prices[j].size == size) {
+                    state.cartList[i].prices[j].quantity++;
+                    break;
+                  }
+                }
+              }
+            }
+          }),
+        ),
+      decrementCartListQuantity: (id: string, size: string) =>
+        set(
+          produce(state => {
+            for (let i = 0; i < state.cartList.length; i++) {
+              if (state.cartList[i].id == id) {
+                for (let j = 0; j < state.cartList[i].prices.length; j++) {
+                  if (state.cartList[i].prices[j].size == size) {
+                    if (state.cartList[i].prices.length > 1) {
+                      if (state.cartList[i].prices[j].quantity > 1) {
+                        state.cartList[i].prices[j].quantity--;
+                      } else {
+                        state.cartList[i].prices.splice(j, 1);
+                      }
+                    } else {
+                      if (state.cartList[i].prices[j].quantity > 1) {
+                        state.cartList[i].prices[j].quantity--;
+                      } else {
+                        state.cartList.splice(i, 1);
+                      }
+                    }
+                    break;
+                  }
+                }
+              }
+            }
+          }),
+        ),
+      addToOrderHistoryListFromCartList: () =>
+        set(
+          produce(state => {
+            let temp = state.cartList.reduce(
+              (acc: number, currentValue: any) =>
+                acc + parseFloat(currentValue.ItemPrice),
+              0,
+            );
+
+            if (state.orderHistoryList.length > 0) {
+              state.orderHistoryList.unshift({
+                OrderDate:
+                  new Date().toDateString() +
+                  ' ' +
+                  new Date().toLocaleTimeString(),
+                cartList: state.cartList,
+                cartListPrice: temp.toFixed(2).toString(),
+              });
+            } else {
+              state.orderHistoryList.push({
+                OrderDate:
+                  new Date().toDateString() +
+                  ' ' +
+                  new Date().toLocaleTimeString(),
+                cartList: state.cartList,
+                cartListPrice: temp.toFixed(2).toString(),
+              });
+            }
+            state.cartList = [];
+          }),
+        ),
     }),
+
     {
       name: 'coffee-app',
       storage: createJSONStorage(() => AsyncStorage),

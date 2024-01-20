@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  ToastAndroid,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -50,6 +51,8 @@ const getCoffeeList = (category: string, data: any) => {
 const HomeScreen = ({navigation}: any) => {
   const coffeeList = useStore((state: any) => state.CoffeeList);
   const BeanList = useStore((state: any) => state.BeanList);
+  const addToCart = useStore((state: any) => state.addToCart);
+  const calculateCartPrice = useStore((state: any) => state.calculateCartPrice);
   const [categories, setCategories] = useState(
     getCategoriesFromData(coffeeList),
   );
@@ -91,6 +94,31 @@ const HomeScreen = ({navigation}: any) => {
   const listRef: any = useRef<FlatList>();
 
   const tabBarHeight = useBottomTabBarHeight();
+
+  const CoffeeAddToCartHandler = ({
+    id,
+    index,
+    name,
+    roasted,
+    imagelink_square,
+    special_ingredient,
+    type,
+    prices,
+  }: any) => {
+    addToCart({
+      id,
+      index,
+      name,
+      roasted,
+      imagelink_square,
+      special_ingredient,
+      type,
+      prices
+    });
+
+    calculateCartPrice();
+    ToastAndroid.showWithGravity(`${name} is Added to cart`,ToastAndroid.SHORT,ToastAndroid.CENTER)
+  };
   return (
     <View style={styles.ScreenContainer}>
       <StatusBar backgroundColor={COLORS.primaryBlackHex} />
@@ -214,7 +242,7 @@ const HomeScreen = ({navigation}: any) => {
                   type={item.type}
                   special_ingredient={item.special_ingredient}
                   average_rating={item.average_rating}
-                  buttonPressHandler={() => {}}
+                  buttonPressHandler={CoffeeAddToCartHandler}
                   imagelink_square={item.imagelink_square}
                 />
               </TouchableOpacity>
@@ -254,7 +282,7 @@ const HomeScreen = ({navigation}: any) => {
                   type={item.type}
                   special_ingredient={item.special_ingredient}
                   average_rating={item.average_rating}
-                  buttonPressHandler={() => {}}
+                  buttonPressHandler={CoffeeAddToCartHandler}
                   imagelink_square={item.imagelink_square}
                 />
               </TouchableOpacity>

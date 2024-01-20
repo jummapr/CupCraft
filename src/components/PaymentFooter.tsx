@@ -18,12 +18,13 @@ const PaymentFooter: React.FC<PaymentFooterProps> = ({
   buttonTitle,
   price,
 }) => {
+  console.log( price.price.toString())
   return (
     <View style={styles.PriceFooter}>
       <View style={styles.priceContainer}>
         <Text style={styles.priceTitle}>Price</Text>
         <Text style={styles.priceText}>
-          {price.currency} <Text style={styles.price}> {price.price}</Text>
+          {price.currency} <Text style={styles.price}>{String(price.price)}</Text>
         </Text>
       </View>
       <TouchableOpacity style={styles.payButton} onPress={() => buttonPressHandler()}> 

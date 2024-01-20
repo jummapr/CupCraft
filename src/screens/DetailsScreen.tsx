@@ -9,7 +9,13 @@ import {
 } from 'react-native';
 import React, {useState} from 'react';
 import {useStore} from '../store/store';
-import {BORDERRADIUS, COLORS, FONTFAMILY, FONTSIZE, SPACING} from '../theme/theme';
+import {
+  BORDERRADIUS,
+  COLORS,
+  FONTFAMILY,
+  FONTSIZE,
+  SPACING,
+} from '../theme/theme';
 import ImageBackgroundInfo from '../components/ImageBackgroundInfo';
 import PaymentFooter from '../components/PaymentFooter';
 
@@ -17,12 +23,14 @@ const DetailsScreen = ({navigation, route}: any) => {
   // console.log("routes",route.params)
   const itemIndex = useStore((state: any) =>
     route.params.type == 'Coffee' ? state.CoffeeList : state.BeanList,
-  )[route.params.index];
+  )[route.params.index] as any;
 
   const [price, setPrice] = useState(itemIndex.prices[0]);
   const [fullDescription, setFullDescription] = useState(false);
 
   const addToFavoriteList = useStore((state: any) => state.addToFavoriteList);
+  const addToCart = useStore((state: any) => state.addToCart);
+  const calculateCartPrice = useStore((state: any) => state.calculateCartPrice);
   const deleteFromFavoriteList = useStore(
     (state: any) => state.deleteFromFavoriteList,
   );
@@ -35,7 +43,31 @@ const DetailsScreen = ({navigation, route}: any) => {
     navigation.pop();
   };
 
-  console.log(price)
+  const addToCartHandler = ({
+    id,
+    index,
+    name,
+    roasted,
+    imagelink_square,
+    special_ingredient,
+    type,
+    price,
+  }: any) => {
+    addToCart({
+      id,
+      index,
+      name,
+      roasted,
+      imagelink_square,
+      special_ingredient,
+      type,
+      prices: [{...price,quantity: 1}],
+    });
+
+    calculateCartPrice();
+    navigation.navigate('Cart')
+  };
+
 
   return (
     <View style={styles.ScreenContainer}>
@@ -85,7 +117,7 @@ const DetailsScreen = ({navigation, route}: any) => {
             {itemIndex.prices.map((data: any) => (
               <TouchableOpacity
                 onPress={() => {
-                  setPrice(data)
+                  setPrice(data);
                 }}
                 key={`${data.size} - ${data.price}`}
                 style={[
@@ -117,7 +149,20 @@ const DetailsScreen = ({navigation, route}: any) => {
             ))}
           </View>
         </View>
-        <PaymentFooter price={price} buttonTitle='Add to cart' buttonPressHandler={() => {}} />
+        <PaymentFooter
+          price={price}
+          buttonTitle="Add to cart"
+          buttonPressHandler={() => addToCartHandler({
+            id: itemIndex.id,
+            index: itemIndex.index,
+            name: itemIndex.name,
+            roasted: itemIndex.roasted,
+            imagelink_square: itemIndex.imagelink_square,
+            special_ingredient: itemIndex.special_ingredient,
+            type: itemIndex.type,
+            price: itemIndex.price,
+          })}
+        />
       </ScrollView>
     </View>
   );
@@ -132,6 +177,7 @@ const styles = StyleSheet.create({
   },
   ScrollViewFlex: {
     flexGrow: 1,
+    justifyContent: 'space-between',
   },
   footerInfoArea: {
     padding: SPACING.space_20,
@@ -151,9 +197,9 @@ const styles = StyleSheet.create({
   },
   sizeOuterContainer: {
     flex: 1,
-    flexDirection: "row",
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: SPACING.space_20
+    gap: SPACING.space_20,
   },
   SizeBox: {
     flex: 1,
@@ -163,9 +209,8 @@ const styles = StyleSheet.create({
     height: SPACING.space_24 * 2,
     borderRadius: BORDERRADIUS.radius_10,
     borderWidth: 2,
-    
   },
   sizeText: {
-     fontFamily: FONTFAMILY.poppins_medium
+    fontFamily: FONTFAMILY.poppins_medium,
   },
 });
